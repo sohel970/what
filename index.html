@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>আড্ডা</title>
+<style>
+:root{--bg:#f3f6f4;--panel:#fff;--ink:#16211c;--mute:#6b7a73;--line:#dfe6e2;--me:#1f7a5a;--meink:#fff;--them:#e9efec;--on:#2bb673}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1512;--panel:#17201b;--ink:#e8efeb;--mute:#8a9a92;--line:#24312a;--me:#2a9d74;--meink:#fff;--them:#222d27;--on:#3fd08d}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:"Noto Sans Bengali","Hind Siliguri",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px}
+button,input{font:inherit;color:inherit}
+input{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;width:100%}
+input:focus-visible,button:focus-visible{outline:2px solid var(--me);outline-offset:1px}
+.btn{background:var(--me);color:var(--meink);border:0;border-radius:10px;padding:12px 18px;cursor:pointer}
+.link{background:none;border:0;color:var(--me);cursor:pointer;padding:6px}
+.hidden{display:none!important}
+#auth{min-height:100%;display:grid;place-items:center;padding:24px}
+#auth form{width:100%;max-width:360px;display:grid;gap:12px}
+#auth h1{font-size:34px;margin-bottom:4px}
+#err{color:#d33;font-size:14px;min-height:20px}
+#app{height:100%;display:flex}
+#side{width:320px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--line)}
+.top b{font-size:18px}
+#users{overflow:auto;flex:1}
+.u{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--line)}
+.u:hover,.u.sel{background:var(--bg)}
+.av{width:40px;height:40px;border-radius:50%;background:var(--me);color:#fff;display:grid;place-items:center;flex:none;position:relative}
+.dot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:var(--mute);border:2px solid var(--panel)}
+.dot.on{background:var(--on)}
+.u small{color:var(--mute);display:block}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#head{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+#back{display:none}
+#msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:6px}
+.m{max-width:min(75%,460px);padding:8px 12px;border-radius:14px;background:var(--them);overflow-wrap:anywhere;white-space:pre-wrap}
+.m.me{align-self:flex-end;background:var(--me);color:var(--meink)}
+.m i{display:block;font-size:11px;opacity:.65;font-style:normal;text-align:right}
+#empty{margin:auto;color:var(--mute);text-align:center;padding:24px}
+#send{display:flex;gap:8px;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
+@media (max-width:700px){
+ #side{width:100%}
+ #main{display:none}
+ #app.chat #side{display:none}
+ #app.chat #main{display:flex}
+ #back{display:inline-block}
+}
+</style>
+</head>
+<body>
+
+<div id="auth">
+ <form id="af">
+  <h1>আড্ডা</h1>
+  <input id="name" placeholder="আপনার নাম" autocomplete="name" class="hidden">
+  <input id="email" type="email" placeholder="ইমেইল" autocomplete="email" required>
+  <input id="pass" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" autocomplete="current-password" required>
+  <div id="err"></div>
+  <button class="btn" id="abtn">লগইন করুন</button>
+  <button type="button" class="link" id="toggle">অ্যাকাউন্ট নেই? নতুন অ্যাকাউন্ট খুলুন</button>
+ </form>
+</div>
+
+<div id="app" class="hidden">
+ <aside id="side">
+  <div class="top"><b>আড্ডা</b><button class="link" id="out">লগআউট</button></div>
+  <div id="users"></div>
+ </aside>
+ <section id="main">
+  <div id="head" class="hidden"><button class="link" id="back">←</button><b id="who"></b><small id="st" style="color:var(--mute)"></small></div>
+  <div id="msgs"><div id="empty">বাঁ দিক থেকে একজনকে বেছে নিয়ে চ্যাট শুরু করুন।</div></div>
+  <form id="send" class="hidden"><input id="txt" placeholder="মেসেজ লিখুন" autocomplete="off"><button class="btn">পাঠান</button></form>
+ </section>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCEW2-BWD5BCoI76rPGpLdNij9W6xsdjak",
+  authDomain: "what-d2f71.firebaseapp.com",
+  projectId: "what-d2f71",
+  storageBucket: "what-d2f71.firebasestorage.app",
+  messagingSenderId: "442034771475",
+  appId: "1:442034771475:web:8b16207ec84145e167d1e6"
+});
+const auth = getAuth(app), db = getFirestore(app);
+const $ = id => document.getElementById(id);
+
+let signup = false, me = null, peer = null, unsubMsgs = null, unsubUsers = null, beat = null, users = [];
+
+// ---------- লগইন / রেজিস্ট্রেশন ----------
+$("toggle").onclick = () => {
+  signup = !signup;
+  $("name").classList.toggle("hidden", !signup);
+  $("name").required = signup;
+  $("abtn").textContent = signup ? "অ্যাকাউন্ট খুলুন" : "লগইন করুন";
+  $("toggle").textContent = signup ? "আগে থেকেই অ্যাকাউন্ট আছে? লগইন করুন" : "অ্যাকাউন্ট নেই? নতুন অ্যাকাউন্ট খুলুন";
+  $("err").textContent = "";
+};
+$("af").onsubmit = async e => {
+  e.preventDefault(); $("err").textContent = "";
+  try {
+    if (signup) {
+      const c = await createUserWithEmailAndPassword(auth, $("email").value, $("pass").value);
+      await updateProfile(c.user, { displayName: $("name").value.trim() });
+      await setDoc(doc(db, "users", c.user.uid), { name: $("name").value.trim(), lastSeen: Date.now() });
+    } else {
+      await signInWithEmailAndPassword(auth, $("email").value, $("pass").value);
+    }
+  } catch (x) {
+    const m = { "auth/invalid-credential":"ইমেইল বা পাসওয়ার্ড ভুল।", "auth/email-already-in-use":"এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে।", "auth/weak-password":"পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।", "auth/invalid-email":"ইমেইল ঠিকভাবে লিখুন।" };
+    $("err").textContent = m[x.code] || "সমস্যা হয়েছে: " + x.code;
+  }
+};
+$("out").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, u => {
+  me = u;
+  $("auth").classList.toggle("hidden", !!u);
+  $("app").classList.toggle("hidden", !u);
+  if (u) start(); else stop();
+});
+
+// ---------- অনলাইন স্ট্যাটাস ----------
+const ping = () => me && setDoc(doc(db, "users", me.uid), { name: me.displayName || me.email, lastSeen: Date.now() }, { merge: true });
+const isOn = u => Date.now() - (u.lastSeen || 0) < 60000;
+
+function start() {
+  ping(); beat = setInterval(() => { ping(); renderUsers(); renderStatus(); }, 30000);
+  unsubUsers = onSnapshot(collection(db, "users"), s => {
+    users = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.id !== me.uid).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    renderUsers(); renderStatus();
+  });
+}
+function stop() {
+  clearInterval(beat); unsubUsers && unsubUsers(); unsubMsgs && unsubMsgs();
+  peer = null; users = []; $("users").innerHTML = ""; $("msgs").innerHTML = '<div id="empty">বাঁ দিক থেকে একজনকে বেছে নিয়ে চ্যাট শুরু করুন।</div>';
+  $("head").classList.add("hidden"); $("send").classList.add("hidden"); $("app").classList.remove("chat");
+}
+addEventListener("visibilitychange", () => document.visibilityState === "visible" && ping());
+
+function renderUsers() {
+  const box = $("users"); box.innerHTML = "";
+  if (!users.length) { box.innerHTML = '<div id="empty">এখনো আর কেউ যোগ দেয়নি। বন্ধুদের লিংক পাঠান।</div>'; return; }
+  users.forEach(u => {
+    const el = document.createElement("div");
+    el.className = "u" + (peer && peer.id === u.id ? " sel" : "");
+    el.innerHTML = `<div class="av">${(u.name || "?")[0]}<span class="dot ${isOn(u) ? "on" : ""}"></span></div><div><b></b><small>${isOn(u) ? "অনলাইন" : "অফলাইন"}</small></div>`;
+    el.querySelector("b").textContent = u.name || "নামহীন";
+    el.onclick = () => openChat(u);
+    box.appendChild(el);
+  });
+}
+function renderStatus() {
+  if (!peer) return;
+  const p = users.find(u => u.id === peer.id); if (!p) return;
+  $("st").textContent = isOn(p) ? "অনলাইন" : "অফলাইন";
+}
+
+// ---------- চ্যাট ----------
+const chatId = (a, b) => [a, b].sort().join("_");
+
+function openChat(u) {
+  peer = u; unsubMsgs && unsubMsgs();
+  $("who").textContent = u.name; renderStatus();
+  $("head").classList.remove("hidden"); $("send").classList.remove("hidden");
+  $("app").classList.add("chat"); renderUsers();
+  const box = $("msgs"); box.innerHTML = "";
+  const q = query(collection(db, "chats", chatId(me.uid, u.id), "messages"), orderBy("createdAt"));
+  unsubMsgs = onSnapshot(q, s => {
+    box.innerHTML = "";
+    if (s.empty) box.innerHTML = '<div id="empty">কোনো মেসেজ নেই। প্রথম মেসেজটা আপনিই পাঠান।</div>';
+    s.docs.forEach(d => {
+      const m = d.data(), el = document.createElement("div");
+      el.className = "m" + (m.from === me.uid ? " me" : "");
+      const t = m.createdAt ? m.createdAt.toDate().toLocaleTimeString("bn-BD", { hour: "numeric", minute: "2-digit" }) : "";
+      el.textContent = m.text;
+      const i = document.createElement("i"); i.textContent = t; el.appendChild(i);
+      box.appendChild(el);
+    });
+    box.scrollTop = box.scrollHeight;
+  });
+}
+$("back").onclick = () => $("app").classList.remove("chat");
+
+$("send").onsubmit = async e => {
+  e.preventDefault();
+  const text = $("txt").value.trim(); if (!text || !peer) return;
+  $("txt").value = "";
+  await addDoc(collection(db, "chats", chatId(me.uid, peer.id), "messages"), { from: me.uid, text, createdAt: serverTimestamp() });
+};
+</script>
+</body>
+</html>
