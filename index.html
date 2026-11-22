@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>আড্ডা</title>
+<style>
+:root{--bg:#efeae2;--panel:#fff;--ink:#16211c;--mute:#6b7a73;--line:#dfe6e2;--me:#1f7a5a;--meink:#fff;--them:#fff;--mine:#d9fdd3;--mineink:#16211c;--on:#2bb673;--red:#d9363e;--blue:#34a0e6}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1410;--panel:#17201b;--ink:#e8efeb;--mute:#8a9a92;--line:#24312a;--me:#2a9d74;--them:#202c26;--mine:#144d37;--mineink:#e8efeb;--on:#3fd08d}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:"Noto Sans Bengali","Hind Siliguri",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px}
+button,input,textarea{font:inherit;color:inherit}
+input{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;width:100%}
+input:focus-visible,button:focus-visible{outline:2px solid var(--me);outline-offset:1px}
+.btn{background:var(--me);color:#fff;border:0;border-radius:10px;padding:12px 18px;cursor:pointer}
+.btn.red{background:var(--red)}
+.link{background:none;border:0;color:var(--me);cursor:pointer;padding:6px;font-size:inherit}
+.ic{background:none;border:0;cursor:pointer;font-size:22px;padding:6px 8px;line-height:1}
+.hidden{display:none!important}
+#auth{min-height:100%;display:grid;place-items:center;padding:24px;background:var(--panel)}
+#auth form{width:100%;max-width:360px;display:grid;gap:12px}
+#auth h1{font-size:34px}
+#err{color:var(--red);font-size:14px;min-height:20px}
+#app{height:100%;display:flex}
+#side{width:340px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;position:relative}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--line)}
+.me{display:flex;align-items:center;gap:10px;cursor:pointer;background:none;border:0;min-width:0}
+.me b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#users{overflow:auto;flex:1}
+.u{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--line)}
+.u:hover,.u.sel{background:var(--bg)}
+.tx{flex:1;min-width:0}
+.u small,#head small{color:var(--mute);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{background:var(--on);color:#fff;border-radius:12px;min-width:22px;height:22px;display:grid;place-items:center;font-size:12px;padding:0 6px}
+.av{width:42px;height:42px;border-radius:50%;background:var(--me);color:#fff;display:grid;place-items:center;flex:none;position:relative;font-weight:600}
+.av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.av.big{width:96px;height:96px;font-size:36px}
+.dot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:var(--mute);border:2px solid var(--panel)}
+.dot.on{background:var(--on)}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#head{display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+#back{display:none}
+#msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:5px}
+.m{max-width:min(80%,460px);padding:7px 11px;border-radius:12px;background:var(--them);overflow-wrap:anywhere;white-space:pre-wrap;box-shadow:0 1px 1px #0002;align-self:flex-start}
+.m.mine{align-self:flex-end;background:var(--mine);color:var(--mineink)}
+.m.sys{align-self:center;background:var(--panel);color:var(--mute);font-size:14px;border-radius:14px}
+.m img{display:block;max-width:100%;border-radius:8px;margin-bottom:4px}
+.m audio{display:block;width:230px;max-width:100%}
+.m i{display:block;font-size:11px;opacity:.7;font-style:normal;text-align:right}
+.m i b{font-weight:400;color:var(--mute)}.m i b.seen{color:var(--blue)}
+.empty{margin:auto;color:var(--mute);text-align:center;padding:24px;white-space:normal}
+#emo{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:8px;background:var(--panel);border-top:1px solid var(--line);max-height:150px;overflow:auto}
+#emo button{background:none;border:0;font-size:24px;cursor:pointer;padding:4px}
+#send,#rec{display:flex;align-items:center;gap:6px;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
+#send input{flex:1;border-radius:22px}
+.rnd{width:44px;height:44px;border-radius:50%;border:0;background:var(--me);color:#fff;font-size:20px;cursor:pointer;flex:none}
+#rec{justify-content:space-between}#rec b{color:var(--red)}
+.ov{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(0,0,0,.55);padding:20px}
+.card{background:var(--panel);border-radius:16px;padding:22px;width:100%;max-width:380px;display:grid;gap:12px;justify-items:center;text-align:center}
+.card .row{display:flex;gap:10px;width:100%}.card .row>*{flex:1}
+#ares{width:100%;display:grid;gap:8px;justify-items:center;min-height:20px}
+#call{position:fixed;inset:0;z-index:30;background:#0b100e;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#rv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0b100e}
+#lv{position:absolute;right:14px;top:calc(70px + env(safe-area-inset-top,0px));width:96px;height:136px;object-fit:cover;border-radius:12px;background:#222;border:2px solid #fff4}
+#lv.mir{transform:scaleX(-1)}
+#call.aud #rv{opacity:0}#call.aud #lv{display:none}#call.vid #cav{display:none}
+#cinfo{position:absolute;top:calc(22px + env(safe-area-inset-top,0px));text-align:center;text-shadow:0 1px 6px #000}
+#cinfo b{font-size:24px;display:block}
+#cbar{position:absolute;bottom:calc(30px + env(safe-area-inset-bottom,0px));display:flex;gap:16px}
+#cbar button{width:56px;height:56px;border-radius:50%;border:0;background:#fff3;color:#fff;font-size:22px;cursor:pointer}
+#cbar button.off{background:#fff;color:#000}#cbar button.end{background:var(--red)}
+@media (max-width:700px){
+ #side{width:100%}#main{display:none}
+ #app.chat #side{display:none}#app.chat #main{display:flex}
+ #back{display:inline-block}
+}
+</style>
+</head>
+<body>
+
+<div id="auth">
+ <form id="af">
+  <h1>আড্ডা</h1>
+  <input id="name" placeholder="আপনার নাম" autocomplete="name" class="hidden">
+  <input id="phone" type="tel" inputmode="tel" placeholder="মোবাইল নম্বর (01XXXXXXXXX)" autocomplete="tel" required>
+  <input id="pass" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" autocomplete="current-password" required>
+  <div id="err"></div>
+  <button class="btn" id="abtn">লগইন করুন</button>
+  <button type="button" class="link" id="toggle">অ্যাকাউন্ট নেই? নতুন অ্যাকাউন্ট খুলুন</button>
+ </form>
+</div>
+
+<div id="app" class="hidden">
+ <aside id="side">
+  <div class="top"><button class="me" id="meBtn" title="প্রোফাইল"></button><button class="ic" id="addBtn" title="বন্ধু যোগ করুন">➕</button></div>
+  <div id="users"></div>
+ </aside>
+ <section id="main">
+  <div id="head" class="hidden">
+   <button class="ic" id="back">←</button><div id="hav"></div>
+   <div class="tx"><b id="who"></b><small id="st"></small></div>
+   <button class="ic" id="acall" title="অডিও কল">📞</button><button class="ic" id="vcall" title="ভিডিও কল">🎥</button>
+  </div>
+  <div id="msgs"><div class="empty">একজনকে বেছে নিয়ে চ্যাট শুরু করুন।</div></div>
+  <div id="emo" class="hidden"></div>
+  <form id="send" class="hidden">
+   <button type="button" class="ic" id="ebtn">😊</button>
+   <button type="button" class="ic" id="ibtn">📷</button>
+   <input type="file" id="file" accept="image/*" class="hidden">
+   <input id="txt" placeholder="মেসেজ লিখুন" autocomplete="off">
+   <button type="button" class="rnd" id="mbtn" title="ভয়েস মেসেজ">🎤</button>
+   <button class="rnd hidden" id="sbtn" title="পাঠান">➤</button>
+  </form>
+  <div id="rec" class="hidden"><button class="ic" id="rcancel">🗑️</button><b>● রেকর্ড হচ্ছে <span id="rt">০০:০০</span></b><button class="rnd" id="rsend">➤</button></div>
+ </section>
+</div>
+
+<div id="add" class="ov hidden"><div class="card">
+ <b>বন্ধু যোগ করুন</b>
+ <input id="aph" type="tel" inputmode="tel" placeholder="বন্ধুর মোবাইল নম্বর">
+ <div class="row"><button class="btn" id="afind">খুঁজুন</button><button class="link" id="aclose">বন্ধ করুন</button></div>
+ <div id="ares"></div>
+</div></div>
+
+<div id="prof" class="ov hidden"><div class="card">
+ <div id="pav"></div>
+ <button class="link" id="pchg">ছবি বদলান</button><input type="file" id="pfile" accept="image/*" class="hidden">
+ <input id="pname" placeholder="নাম" maxlength="30">
+ <input id="pabout" placeholder="আপনার সম্পর্কে কিছু লিখুন" maxlength="80">
+ <small id="pphone" style="color:var(--mute)"></small>
+ <div class="row"><button class="btn" id="psave">সংরক্ষণ করুন</button><button class="link" id="pclose">বন্ধ করুন</button></div>
+ <button class="link" id="out" style="color:var(--red)">লগআউট</button>
+</div></div>
+
+<div id="inc" class="ov hidden"><div class="card">
+ <div id="iav"></div><b id="iname"></b><span id="itype" style="color:var(--mute)"></span>
+ <div class="row"><button class="btn red" id="idec">কাটুন</button><button class="btn" id="iacc">ধরুন</button></div>
+</div></div>
+
+<div id="call" class="hidden aud">
+ <video id="rv" autoplay playsinline></video>
+ <video id="lv" autoplay playsinline muted></video>
+ <div id="cinfo"><b id="cname"></b><span id="cst"></span></div>
+ <div id="cav"></div>
+ <div id="cbar"><button id="cmic" title="মাইক">🎤</button><button id="ccam" title="ক্যামেরা চালু/বন্ধ">📷</button><button id="cflip" title="সামনে/পেছনের ক্যামেরা">🔄</button><button class="end" id="cend" title="কল শেষ">✕</button></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCEW2-BWD5BCoI76rPGpLdNij9W6xsdjak",
+  authDomain: "what-d2f71.firebaseapp.com",
+  projectId: "what-d2f71",
+  storageBucket: "what-d2f71.firebasestorage.app",
+  messagingSenderId: "442034771475",
+  appId: "1:442034771475:web:8b16207ec84145e167d1e6"
+});
+const auth = getAuth(app), db = getFirestore(app);
+const $ = id => document.getElementById(id);
+
+let signup = false, me = null, myKey = "", profile = {}, peer = null, peers = {}, meta = {};
+let subs = [], peerSubs = {}, metaSubs = {}, unsubMsgs = null, beat = null, tick = null, incoming = null, newPhoto = null;
+
+// ---------- সাহায্যকারী ----------
+const digits = p => { let d = p.replace(/\D/g, ""); if (d.length === 11 && d[0] === "0") d = "88" + d; return d; };
+const chatId = (a, b) => [a, b].sort().join("_");
+const isOn = u => Date.now() - (u.lastSeen || 0) < 60000;
+const bn = n => n.toLocaleString("bn-BD", { minimumIntegerDigits: 2, useGrouping: false });
+const fmt = s => bn(Math.floor(s / 60)) + ":" + bn(s % 60);
+const users = () => Object.values(peers);
+const shrink = (f, max, q) => new Promise(r => {
+  const i = new Image();
+  i.onload = () => { const k = Math.min(1, max / Math.max(i.width, i.height)), c = document.createElement("canvas");
+    c.width = i.width * k; c.height = i.height * k; c.getContext("2d").drawImage(i, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(i.src); r(c.toDataURL("image/jpeg", q)); };
+  i.src = URL.createObjectURL(f);
+});
+const toURL = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+function mkAv(u, showDot, big) {
+  const a = document.createElement("div"); a.className = "av" + (big ? " big" : "");
+  if (u.photo) { const im = document.createElement("img"); im.src = u.photo; im.alt = ""; a.appendChild(im); }
+  else a.textContent = (u.name || "?")[0];
+  if (showDot) { const d = document.createElement("span"); d.className = "dot" + (isOn(u) ? " on" : ""); a.appendChild(d); }
+  return a;
+}
+const put = (el, node) => { el.innerHTML = ""; el.appendChild(node); };
+document.addEventListener("click", () => { try { AC = AC || new AudioContext(); AC.resume(); } catch {} }, { once: true });
+
+// ---------- লগইন / রেজিস্ট্রেশন ----------
+$("toggle").onclick = () => {
+  signup = !signup;
+  $("name").classList.toggle("hidden", !signup); $("name").required = signup;
+  $("abtn").textContent = signup ? "অ্যাকাউন্ট খুলুন" : "লগইন করুন";
+  $("toggle").textContent = signup ? "আগে থেকেই অ্যাকাউন্ট আছে? লগইন করুন" : "অ্যাকাউন্ট নেই? নতুন অ্যাকাউন্ট খুলুন";
+  $("err").textContent = "";
+};
+$("af").onsubmit = async e => {
+  e.preventDefault(); $("err").textContent = "";
+  const d = digits($("phone").value);
+  if (d.length < 10) { $("err").textContent = "সঠিক মোবাইল নম্বর লিখুন।"; return; }
+  try {
+    if (signup) {
+      const c = await createUserWithEmailAndPassword(auth, d + "@adda.app", $("pass").value);
+      await setDoc(doc(db, "users", c.user.uid), { name: $("name").value.trim(), phone: $("phone").value.trim(), about: "হ্যালো! আমি আড্ডায় আছি।", lastSeen: Date.now() });
+      await setDoc(doc(db, "phones", d), { uid: c.user.uid });
+    } else await signInWithEmailAndPassword(auth, d + "@adda.app", $("pass").value);
+  } catch (x) {
+    const m = { "auth/invalid-credential": "নম্বর বা পাসওয়ার্ড ভুল।", "auth/email-already-in-use": "এই নম্বর দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে।", "auth/weak-password": "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।" };
+    $("err").textContent = m[x.code] || "সমস্যা হয়েছে: " + x.code;
+  }
+};
+$("out").onclick = () => { $("prof").classList.add("hidden"); signOut(auth); };
+onAuthStateChanged(auth, u => {
+  me = u; $("auth").classList.toggle("hidden", !!u); $("app").classList.toggle("hidden", !u);
+  u ? start() : stop();
+});
+
+// ---------- শুরু / শেষ ----------
+const ping = () => me && setDoc(doc(db, "users", me.uid), { lastSeen: Date.now() }, { merge: true });
+function start() {
+  myKey = me.email.split("@")[0];
+  setDoc(doc(db, "phones", myKey), { uid: me.uid }).catch(() => {});
+  ping(); beat = setInterval(() => { ping(); renderUsers(); }, 30000); tick = setInterval(renderHead, 2000);
+  subs.push(onSnapshot(doc(db, "users", me.uid), s => { profile = { id: me.uid, ...s.data() }; renderMe(); }));
+  subs.push(onSnapshot(collection(db, "users", me.uid, "contacts"), s => s.docs.forEach(d => watchPeer(d.id))));
+  subs.push(onSnapshot(query(collection(db, "calls"), where("participants", "array-contains", me.uid)), s =>
+    s.docChanges().forEach(ch => {
+      const d = { id: ch.doc.id, ...ch.doc.data() };
+      if (d.to === me.uid && d.status === "ringing" && !pc && !incoming && Date.now() - d.t < 45000) showIncoming(d);
+      if (incoming && incoming.id === d.id && d.status === "ended") hideIncoming();
+    })));
+}
+function watchPeer(id) {
+  if (peerSubs[id]) return;
+  peerSubs[id] = onSnapshot(doc(db, "users", id), s => {
+    peers[id] = { id, ...s.data() }; if (peer && peer.id === id) { peer = peers[id]; renderHead(); } renderUsers();
+  });
+  metaSubs[id] = onSnapshot(doc(db, "chats", chatId(me.uid, id)), s => { meta[id] = s.exists() ? s.data() : {}; renderUsers(); });
+}
+function stop() {
+  clearInterval(beat); clearInterval(tick); unsubMsgs && unsubMsgs();
+  subs.forEach(f => f()); subs = []; Object.values(peerSubs).concat(Object.values(metaSubs)).forEach(f => f());
+  peerSubs = {}; metaSubs = {}; peers = {}; meta = {}; peer = null; endCall(false);
+  $("users").innerHTML = ""; $("msgs").innerHTML = '<div class="empty">একজনকে বেছে নিয়ে চ্যাট শুরু করুন।</div>';
+  ["head", "send", "emo", "rec"].forEach(i => $(i).classList.add("hidden")); $("app").classList.remove("chat");
+}
+addEventListener("visibilitychange", () => document.visibilityState === "visible" && ping());
+
+function renderMe() {
+  const b = $("meBtn"); b.innerHTML = ""; b.appendChild(mkAv(profile));
+  const n = document.createElement("b"); n.textContent = profile.name || "আমি"; b.appendChild(n);
+}
+function renderUsers() {
+  const box = $("users"); box.innerHTML = "";
+  if (!users().length) { box.innerHTML = '<div class="empty">কোনো চ্যাট নেই।<br>উপরের ➕ চেপে বন্ধুর মোবাইল নম্বর দিয়ে খুঁজুন।</div>'; return; }
+  users().sort((a, b) => ((meta[b.id] || {}).lastAt || 0) - ((meta[a.id] || {}).lastAt || 0) || (a.name || "").localeCompare(b.name || "")).forEach(u => {
+    const m = meta[u.id] || {}, un = m["unread_" + me.uid] || 0, el = document.createElement("div");
+    el.className = "u" + (peer && peer.id === u.id ? " sel" : "");
+    el.appendChild(mkAv(u, true));
+    const tx = document.createElement("div"); tx.className = "tx";
+    const b = document.createElement("b"); b.textContent = u.name || "নামহীন";
+    const s = document.createElement("small"); s.textContent = m.last ? (m.lastFrom === me.uid ? "আপনি: " : "") + m.last : (u.about || "");
+    tx.append(b, s); el.appendChild(tx);
+    if (un) { const g = document.createElement("span"); g.className = "badge"; g.textContent = un; el.appendChild(g); }
+    el.onclick = () => openChat(u); box.appendChild(el);
+  });
+}
+function renderHead() {
+  if (!peer) return;
+  put($("hav"), mkAv(peer, true)); $("who").textContent = peer.name;
+  const t = (meta[peer.id] || {})["typing_" + peer.id];
+  $("st").textContent = t && Date.now() - t < 5000 ? "লিখছে..." : isOn(peer) ? "অনলাইন" : (peer.about || "অফলাইন");
+}
+
+// ---------- বন্ধু যোগ ----------
+$("addBtn").onclick = () => { $("aph").value = ""; $("ares").innerHTML = ""; $("add").classList.remove("hidden"); };
+$("aclose").onclick = () => $("add").classList.add("hidden");
+$("afind").onclick = async () => {
+  const r = $("ares"), d = digits($("aph").value); r.textContent = "";
+  if (d.length < 10) { r.textContent = "সঠিক মোবাইল নম্বর লিখুন।"; return; }
+  if (d === myKey) { r.textContent = "এটা আপনার নিজের নম্বর।"; return; }
+  r.textContent = "খুঁজছি...";
+  try {
+    const p = await getDoc(doc(db, "phones", d));
+    if (!p.exists()) { r.textContent = "এই নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি।"; return; }
+    const s = await getDoc(doc(db, "users", p.data().uid)), u = { id: s.id, ...s.data() };
+    r.innerHTML = ""; r.appendChild(mkAv(u, false, true));
+    const n = document.createElement("b"); n.textContent = u.name; const a = document.createElement("small"); a.textContent = u.about || "";
+    const b = document.createElement("button"); b.className = "btn"; b.textContent = peers[u.id] ? "চ্যাট খুলুন" : "যোগ করুন";
+    b.onclick = async () => {
+      if (!peers[u.id]) await setDoc(doc(db, "users", me.uid, "contacts", u.id), { t: Date.now() });
+      $("add").classList.add("hidden"); openChat(u);
+    };
+    r.append(n, a, b);
+  } catch { r.textContent = "খুঁজতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"; }
+};
+
+// ---------- চ্যাট ----------
+function openChat(u) {
+  peer = u; unsubMsgs && unsubMsgs();
+  ["head", "send"].forEach(i => $(i).classList.remove("hidden")); $("app").classList.add("chat");
+  renderHead(); renderUsers();
+  const box = $("msgs"); box.innerHTML = "";
+  unsubMsgs = onSnapshot(query(collection(db, "chats", chatId(me.uid, u.id), "messages"), orderBy("createdAt")), s => {
+    box.innerHTML = "";
+    if (s.empty) box.innerHTML = '<div class="empty">কোনো মেসেজ নেই। প্রথম মেসেজটা আপনিই পাঠান।</div>';
+    s.docs.forEach(d => {
+      const m = d.data(), mine = m.from === me.uid, el = document.createElement("div");
+      el.className = "m" + (m.call ? " sys" : mine ? " mine" : "");
+      if (m.img) { const im = document.createElement("img"); im.src = m.img; im.alt = "ছবি"; el.appendChild(im); }
+      if (m.aud) { const a = document.createElement("audio"); a.controls = true; a.src = m.aud; el.appendChild(a); }
+      if (m.text) el.appendChild(document.createTextNode(m.text));
+      if (!m.call) {
+        const i = document.createElement("i");
+        i.textContent = (m.createdAt ? m.createdAt.toDate().toLocaleTimeString("bn-BD", { hour: "numeric", minute: "2-digit" }) : "") + " ";
+        if (mine) { const t = document.createElement("b"); t.className = m.seen ? "seen" : ""; t.textContent = m.seen ? "✓✓" : "✓"; i.appendChild(t); }
+        el.appendChild(i);
+      }
+      if (mine && !m.call) el.onclick = () => confirm("এই মেসেজ মুছে ফেলবেন?") && deleteDoc(d.ref);
+      if (!mine && !m.seen && !m.call && document.visibilityState === "visible") updateDoc(d.ref, { seen: true }).catch(() => {});
+      box.appendChild(el);
+    });
+    box.scrollTop = box.scrollHeight;
+    if (((meta[u.id] || {})["unread_" + me.uid] || 0) > 0) setDoc(doc(db, "chats", chatId(me.uid, u.id)), { ["unread_" + me.uid]: 0 }, { merge: true });
+  });
+}
+$("back").onclick = () => $("app").classList.remove("chat");
+
+async function sendTo(pid, o) {
+  const id = chatId(me.uid, pid);
+  await addDoc(collection(db, "chats", id, "messages"), { from: me.uid, text: o.text || "", img: o.img || "", aud: o.aud || "", call: !!o.call, seen: false, createdAt: serverTimestamp() });
+  await setDoc(doc(db, "chats", id), { last: o.text || (o.img ? "📷 ছবি" : "🎤 ভয়েস মেসেজ"), lastAt: Date.now(), lastFrom: me.uid, ["unread_" + pid]: increment(1) }, { merge: true });
+  if (!(meta[pid] || {}).lastAt) setDoc(doc(db, "users", pid, "contacts", me.uid), { t: Date.now() }, { merge: true }).catch(() => {});
+}
+$("send").onsubmit = e => {
+  e.preventDefault(); const t = $("txt").value.trim(); if (!t || !peer) return;
+  $("txt").value = ""; swapBtn(); sendTo(peer.id, { text: t });
+};
+let lastTyping = 0;
+const swapBtn = () => { const h = !!$("txt").value.trim(); $("mbtn").classList.toggle("hidden", h); $("sbtn").classList.toggle("hidden", !h); };
+$("txt").oninput = () => {
+  swapBtn();
+  if (peer && Date.now() - lastTyping > 2500) { lastTyping = Date.now(); setDoc(doc(db, "chats", chatId(me.uid, peer.id)), { ["typing_" + me.uid]: Date.now() }, { merge: true }).catch(() => {}); }
+};
+
+"😀 😂 🤣 😊 😍 🥰 😘 😎 🤔 😅 😉 🙂 🤗 😇 🥳 😋 😢 😭 😡 😴 🙄 😱 🤝 👍 👎 👏 🙏 💪 ✌️ 👋 ❤️ 💔 🔥 ✨ ⭐ 🎉 🎂 🎁 🌹 ☀️ 🌙 ☕ 🍕 🍔 🍚 📞 ✅ ❌ 😷 🤒 🥺 😏 🤩 😬 🤭".split(" ").forEach(x => {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = x;
+  b.onclick = () => { $("txt").value += x; $("txt").focus(); swapBtn(); }; $("emo").appendChild(b);
+});
+$("ebtn").onclick = () => $("emo").classList.toggle("hidden");
+$("ibtn").onclick = () => $("file").click();
+$("file").onchange = async e => { const f = e.target.files[0]; e.target.value = ""; if (f && peer) sendTo(peer.id, { img: await shrink(f, 800, 0.6) }); };
+
+// ভয়েস মেসেজ
+let rec = null, recChunks = [], recT = null, recStart = 0, recSend = false;
+$("mbtn").onclick = async () => {
+  if (!peer) return;
+  let s; try { s = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch { alert("মাইক্রোফোনের অনুমতি দিন।"); return; }
+  const mt = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+  rec = new MediaRecorder(s, mt ? { mimeType: mt, audioBitsPerSecond: 24000 } : {}); recChunks = []; recSend = false;
+  rec.ondataavailable = e => recChunks.push(e.data);
+  rec.onstop = async () => {
+    s.getTracks().forEach(t => t.stop()); clearInterval(recT); $("rec").classList.add("hidden"); $("send").classList.remove("hidden");
+    if (!recSend) return;
+    const url = await toURL(new Blob(recChunks, { type: rec.mimeType }));
+    url.length < 900000 ? sendTo(peer.id, { aud: url }) : alert("ভয়েস মেসেজ অনেক বড়। ছোট করে রেকর্ড করুন।");
+  };
+  rec.start(); recStart = Date.now(); $("send").classList.add("hidden"); $("rec").classList.remove("hidden");
+  recT = setInterval(() => { const t = Math.floor((Date.now() - recStart) / 1000); $("rt").textContent = fmt(t); if (t >= 90) { recSend = true; rec.stop(); } }, 500);
+};
+$("rsend").onclick = () => { recSend = true; rec.stop(); };
+$("rcancel").onclick = () => { recSend = false; rec.stop(); };
+
+// ---------- প্রোফাইল ----------
+$("meBtn").onclick = () => {
+  newPhoto = null; $("pname").value = profile.name || ""; $("pabout").value = profile.about || "";
+  $("pphone").textContent = "নম্বর: " + (profile.phone || ""); put($("pav"), mkAv(profile, false, true)); $("prof").classList.remove("hidden");
+};
+$("pchg").onclick = () => $("pfile").click();
+$("pfile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  newPhoto = await shrink(f, 160, 0.7); put($("pav"), mkAv({ ...profile, photo: newPhoto }, false, true));
+};
+$("pclose").onclick = () => $("prof").classList.add("hidden");
+$("psave").onclick = async () => {
+  const d = { name: $("pname").value.trim() || profile.name, about: $("pabout").value.trim() };
+  if (newPhoto) d.photo = newPhoto;
+  await setDoc(doc(db, "users", me.uid), d, { merge: true }); $("prof").classList.add("hidden");
+};
+
+// ---------- অডিও / ভিডিও কল ----------
+const ICE = { iceServers: [
+  { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+  { urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turns:openrelay.metered.ca:443?transport=tcp"], username: "openrelayproject", credential: "openrelayproject" }
+] };
+let pc = null, stream = null, remote = null, callRef = null, callUnsub = null, role = "", callPeer = "", callVideo = false;
+let facing = "user", connectedAt = 0, timer = null, ready = null, AC = null, ringT = null;
+
+function tone(on) {
+  clearInterval(ringT); ringT = null; if (!on || !AC) return;
+  const beep = () => { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = 425; g.gain.value = 0.12; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + 0.5); };
+  beep(); ringT = setInterval(beep, 1800);
+}
+const media = (v, f) => navigator.mediaDevices.getUserMedia({ audio: true, video: v ? { facingMode: f, width: { ideal: 640 }, height: { ideal: 480 } } : false });
+function showCall(who, video, st) {
+  $("cname").textContent = who.name || "কল"; $("cst").textContent = st; callVideo = video;
+  put($("cav"), mkAv(who, false, true)); $("cav").style.cssText = "position:relative;margin-top:-40px";
+  $("call").className = video ? "vid" : "aud"; $("ccam").classList.toggle("hidden", !video); $("cflip").classList.toggle("hidden", !video);
+  $("lv").classList.remove("mir"); video && $("lv").classList.add("mir"); $("lv").srcObject = stream;
+  $("cmic").classList.remove("off"); $("ccam").classList.remove("off");
+}
+function setupPC() {
+  remote = new MediaStream(); $("rv").srcObject = remote;
+  const rp = new Promise(r => { ready = r; });
+  pc = new RTCPeerConnection(ICE);
+  stream.getTracks().forEach(t => pc.addTrack(t, stream));
+  pc.ontrack = e => { remote.addTrack(e.track); $("rv").play().catch(() => {}); };
+  pc.onicecandidate = e => e.candidate && rp.then(() => updateDoc(callRef, { [role + "Cands"]: arrayUnion(JSON.stringify(e.candidate)) })).catch(() => {});
+  pc.onconnectionstatechange = () => {
+    const s = pc && pc.connectionState;
+    if (s === "connected" && !connectedAt) {
+      tone(false); connectedAt = Date.now(); $("cst").textContent = fmt(0);
+      timer = setInterval(() => { $("cst").textContent = fmt(Math.floor((Date.now() - connectedAt) / 1000)); }, 1000);
+    }
+    if (s === "disconnected") $("cst").textContent = "নেটওয়ার্ক দুর্বল...";
+    if (s === "failed") endCall(true);
+  };
+}
+function watchCall() {
+  let n = 0, got = false;
+  callUnsub = onSnapshot(callRef, async s => {
+    const d = s.data(); if (!d || !pc) return;
+    if (d.status === "ended") return endCall(false);
+    if (role === "caller" && d.answer && !got) { got = true; await pc.setRemoteDescription(d.answer); $("cst").textContent = "সংযুক্ত হচ্ছে..."; }
+    const rc = d[role === "caller" ? "calleeCands" : "callerCands"] || [];
+    if (pc && pc.remoteDescription) for (; n < rc.length; n++) { try { await pc.addIceCandidate(JSON.parse(rc[n])); } catch {} }
+  });
+}
+async function startCall(video) {
+  if (!peer || pc) return;
+  try { stream = await media(video, facing); } catch { alert("মাইক্রোফোন/ক্যামেরার অনুমতি দিন।"); return; }
+  role = "caller"; callPeer = peer.id; callRef = doc(collection(db, "calls")); connectedAt = 0;
+  showCall(peer, video, "রিং হচ্ছে..."); tone(true);
+  setupPC(); const o = await pc.createOffer(); await pc.setLocalDescription(o);
+  await setDoc(callRef, { from: me.uid, to: peer.id, participants: [me.uid, peer.id], fromName: profile.name || "", video, offer: { type: o.type, sdp: o.sdp }, status: "ringing", callerCands: [], calleeCands: [], t: Date.now() });
+  ready(); watchCall();
+  const p = pc; setTimeout(() => { if (pc === p && !connectedAt) endCall(true); }, 45000);
+}
+function showIncoming(d) {
+  incoming = d; put($("iav"), mkAv(peers[d.from] || { name: d.fromName }, false, true));
+  $("iname").textContent = d.fromName || "কেউ"; $("itype").textContent = d.video ? "ভিডিও কল আসছে..." : "অডিও কল আসছে...";
+  $("inc").classList.remove("hidden"); navigator.vibrate && navigator.vibrate([400, 200, 400]); tone(true);
+}
+const hideIncoming = () => { incoming = null; tone(false); $("inc").classList.add("hidden"); };
+$("idec").onclick = () => { updateDoc(doc(db, "calls", incoming.id), { status: "ended" }).catch(() => {}); hideIncoming(); };
+$("iacc").onclick = async () => {
+  const d = incoming; hideIncoming();
+  try { stream = await media(d.video, facing); } catch { alert("মাইক্রোফোন/ক্যামেরার অনুমতি দিন।"); updateDoc(doc(db, "calls", d.id), { status: "ended" }); return; }
+  role = "callee"; callRef = doc(db, "calls", d.id); callPeer = d.from; connectedAt = 0;
+  showCall(peers[d.from] || { name: d.fromName }, d.video, "সংযুক্ত হচ্ছে...");
+  setupPC(); ready(); await pc.setRemoteDescription(d.offer);
+  const a = await pc.createAnswer(); await pc.setLocalDescription(a);
+  await updateDoc(callRef, { answer: { type: a.type, sdp: a.sdp }, status: "active" }); watchCall();
+};
+function endCall(notify = true) {
+  if (!pc && !callRef) return;
+  tone(false); callUnsub && callUnsub(); callUnsub = null; clearInterval(timer);
+  const dur = connectedAt ? Math.round((Date.now() - connectedAt) / 1000) : 0;
+  if (notify && callRef) updateDoc(callRef, { status: "ended" }).catch(() => {});
+  if (role === "caller" && callPeer && me) sendTo(callPeer, { call: true, text: (callVideo ? "🎥 ভিডিও কল" : "📞 অডিও কল") + " · " + (dur ? fmt(dur) : "ধরা হয়নি") }).catch(() => {});
+  pc && pc.close(); pc = null; stream && stream.getTracks().forEach(t => t.stop()); stream = null; remote = null; callRef = null; connectedAt = 0; role = "";
+  $("rv").srcObject = null; $("lv").srcObject = null; $("call").classList.add("hidden");
+}
+const toggle = (kind, btn) => { const t = stream && (kind === "a" ? stream.getAudioTracks() : stream.getVideoTracks())[0]; if (t) { t.enabled = !t.enabled; $(btn).classList.toggle("off", !t.enabled); } };
+$("acall").onclick = () => startCall(false); $("vcall").onclick = () => startCall(true);
+$("cend").onclick = () => endCall(true); $("cmic").onclick = () => toggle("a", "cmic"); $("ccam").onclick = () => toggle("v", "ccam");
+$("cflip").onclick = async () => {
+  if (!stream || !pc) return;
+  const old = stream.getVideoTracks()[0]; if (!old) return; old.stop();
+  facing = facing === "user" ? "environment" : "user";
+  try {
+    const t = (await media(true, facing)).getVideoTracks()[0];
+    stream.removeTrack(old); stream.addTrack(t);
+    await pc.getSenders().find(s => s.track && s.track.kind === "video").replaceTrack(t);
+    $("lv").srcObject = stream; $("lv").classList.toggle("mir", facing === "user");
+  } catch { alert("ক্যামেরা বদলানো যায়নি।"); }
+};
+</script>
+</body>
+</html>
